@@ -1,0 +1,162 @@
+html, body, .full {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.fill-width {
+    width: 100%;
+}
+
+.fill-height {
+    height: 100%;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+button {
+    padding: .5em 1em;
+    outline: none;
+    background-color: #eee;
+    color: #555;
+    font-size: 1em;
+    border: none;
+    border-radius: .2em;
+    transition: background-color 200ms, color 200ms;
+}
+
+button:hover {
+    background-color: #ddd;
+    color: #444;
+    cursor: pointer;
+}
+
+button:active {
+    background-color: #888;
+    color: #222;
+}
+
+.relative {
+    position: relative;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+
+.shadow {
+    box-shadow: 2px 2px 2px #ccc;
+}
+
+.pa-p5 {
+    padding: .5em;
+}
+
+.pa-p2 {
+    padding: .2em;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.flex-verticle {
+    flex-direction: column;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.round {
+    border-radius: .2em;
+}
+
+.gray-bg {
+    background-color: #eee;
+}
+
+.white-bg {
+    background-color: #fff;
+}
+
+.node {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    overflow: hidden;
+    min-width: 10em;
+    max-width: 20em;
+}
+
+.node > .drag-bar {
+    width: 100%;
+    height: 10px;
+    background-color: rgb(57, 59, 92);
+    text-align: center;
+    cursor: move;
+    padding-top: 4px;
+}
+
+.node > .drag-bar > .drag-bar-icon {
+    width: 20px;
+    height: 2px;
+    margin: auto;
+    background-color: #fff;
+}
+
+.node > .node-button-bar > button {
+    background-color: #fff;
+    color: #ccc;
+    border: none;
+    border-radius: 0;
+    padding: .2em .5em;
+    transition: background-color 200ms, color 200ms;
+}
+
+.node > .node-button-bar > button:hover {
+    background-color: #eee;
+    color: #888;
+}
+
+.node >  .node-button-bar > .node-handle {
+    height: 1em;
+    width: 1em;
+    margin: 0 0.2em;
+    background-color: #ccc;
+    border-radius: .5em;
+}
+
+.node >  .node-button-bar > .node-handle:hover {
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 0;
+    background-color: rgb(57, 59, 92);
+    transition: border-top-right-radius 500ms, border-bottom-left-radius 500ms, background-color 500ms;
+    animation-name: expand;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
+@keyframes expand {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

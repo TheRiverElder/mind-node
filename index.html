@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>RMN</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+
+        <!-- 编辑器面板 -->
+        <div id="editor" class="full gray-bg d-flex flex-verticle">
+            <!-- 菜单 -->
+            <div id="button-bar" class="white-bg shadow pa-p5">
+                <!-- 打开SL面板 -->
+                <button>SL</button>
+
+                <!-- 清空节点池 -->
+                <button>Clear</button>
+
+                <!-- 新增节点 -->
+                <button onclick="createAndAppendNode()">New Node</button>
+            </div>
+
+            <!-- 节点池 -->
+            <div id="pool" class="relative overflow-hidden flex-grow-1">
+                <!-- 节点之间的关系线条 -->
+                <canvas id="connections" class="full"></canvas>
+
+                <!-- 节点实际内容集合 -->
+                <div id="node-container" class="full overlay">
+                    <!-- <div class="node white-bg round shadow">
+                        <div class="drag-bar">
+                            <div class="drag-bar-icon round"></div>
+                        </div>
+
+                        <div class="content pa-p5">TEXT</div>
+
+                        <div class="node-button-bar fill-width d-flex align-items-center">
+                            <button class="flex-grow-1">Edit</button>
+
+                            <button class="flex-grow-1">Delete</button>
+                            
+                            <div class="node-handle"></div>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SL面板 -->
+        <div>
+
+        </div>
+    </body>
+
+    <script src="script.js"></script>
+</html>
