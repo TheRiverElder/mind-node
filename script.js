@@ -28,6 +28,12 @@ window.addEventListener('resize', () => {
 
 const NODES = {};
 
+const PANEL = {
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+};
+
 const DRAG_STATE = {
     id: null,
     startOffsetX: 0, // 开始时候鼠标相对于节点元素的偏移量
@@ -57,11 +63,11 @@ function redrawLinks() {
     cxt.strokeStyle = '#888';
     cxt.lineWidth = 1.5;
     for (let node of Object.values(NODES)) {
-        if (!node.outLinks.length) {
+        if (!node.outLinks.size) {
             continue;
         }
         const fromPort = node.getPort();
-        for(let targetId of node.outLinks) {
+        for(let targetId of [...node.outLinks]) {
             const target = NODES[targetId];
             const toPort = target.getPort();
             const middle = (fromPort.outX + toPort.inX) / 2;
@@ -74,23 +80,33 @@ function redrawLinks() {
 }
 
 
+/**
+ * 创建一个不存的的链接，或解除一个已存在的链接
+ * @param {Object} from 链接源
+ * @param {Object} to 链接尾
+ */
 function link(from, to) {
-    if (from.outLinks.indexOf(to.id) < 0) {
-        from.outLinks.push(to.id);
-    }
-    if (to.inLinks.indexOf(from.id) < 0) {
-        to.inLinks.push(from.id);
+    if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id)) {
+        console.log('link');
+        from.outLinks.add(to.id);
+        to.inLinks.add(from.id);
+    } else {
+        console.log('unlink');
+        from.outLinks.delete(to.id);
+        to.inLinks.delete(from.id);
     }
     redrawLinks();
 }
 
-
+/**
+ * 创建节点
+ */
 function createNode() {
     const node = {
         id: genId(),
         el: null,
-        inLinks: [],
-        outLinks: [],
+        inLinks: new Set(),
+        outLinks: new Set(),
         moveTo(x, y) {
             this.el.style.left = x + 'px';
             this.el.style.top = y + 'px';
@@ -99,9 +115,9 @@ function createNode() {
             const el = this.el;
             return {
                 inX: el.offsetLeft,
-                inY: el.offsetTop + 20,
+                inY: el.offsetTop + 30,
                 outX: el.offsetLeft + el.offsetWidth,
-                outY: el.offsetTop + 20,
+                outY: el.offsetTop + 30,
             };
         },
     };
@@ -110,6 +126,10 @@ function createNode() {
     return node;
 }
 
+/**
+ * 为节点创建HTML元素
+ * @param {Object} node 节点
+ */
 function createNodeEl(node) {
     const el = Object.assign(document.createElement('div'), {
         id: node.id,
@@ -181,12 +201,18 @@ function createNodeEl(node) {
     return el;
 }
 
+/**
+ * 创建节点并添加到HTML页面中
+ */
 function createAndAppendNode() {
     const node = createNode();
     NODES[node.id] = node;
     NODE_CONTAINER.appendChild(node.el);
 }
 
+/**
+ * 初始化
+ */
 createAndAppendNode();
 resizeCanvas();
 redrawLinks();
