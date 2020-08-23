@@ -151,13 +151,17 @@ button:active {
     margin: 0 0.2em;
     background-color: #ccc;
     border-radius: .5em;
+    transition: border-top-right-radius 500ms, border-bottom-left-radius 500ms, background-color 500ms;
 }
 
 .node >  .node-button-bar > .node-handle:hover {
+    background-color: rgb(59, 138, 230);
+}
+
+.node >  .node-button-bar > .node-handle.linking {
     border-top-right-radius: 0;
     border-bottom-left-radius: 0;
     background-color: rgb(57, 59, 92);
-    transition: border-top-right-radius 500ms, border-bottom-left-radius 500ms, background-color 500ms;
     animation-name: expand;
     animation-duration: 1s;
     animation-iteration-count: infinite;
