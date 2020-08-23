@@ -6,6 +6,11 @@ function genId() {
     return Date.now();
 }
 
+function stopBubble(event) {
+    console.log(event);
+    event.stopPropagation();
+}
+
 const NODE_CONTAINER = document.getElementById('node-container');
 
 const NODES = {};
@@ -14,6 +19,10 @@ const DRAG_STATE = {
     id: null,
     startOffsetX: 0, // 开始时候鼠标相对于节点元素的偏移量
     startOffsetY: 0, 
+};
+
+const LINK_STATE = {
+    id: null,
 };
 
 NODE_CONTAINER.addEventListener('dragend', event => {
@@ -39,7 +48,10 @@ function createNode() {
         moveTo(x, y) {
             this.el.style.left = x + 'px';
             this.el.style.top = y + 'px';
-        }
+        },
+        getPort() {
+            
+        },
     };
 
     node.el = createNodeEl(node);
@@ -53,27 +65,48 @@ function createNodeEl(node) {
         draggable: true
     });
 
-    const handle = Object.assign(document.createElement('div'), {className: 'drag-bar'});
-    handle.appendChild(Object.assign(document.createElement('div'), {className: 'drag-bar-icon round'}));
-    el.appendChild(handle);
+    const hdlMove = Object.assign(document.createElement('div'), {className: 'drag-bar'});
+    hdlMove.appendChild(Object.assign(document.createElement('div'), {className: 'drag-bar-icon round'}));
+    el.appendChild(hdlMove);
 
-    const content = Object.assign(document.createElement('div'), {className: 'content pa-p5', innerText: 'TEXT'});
+    const content = Object.assign(document.createElement('div'), {className: 'content pa-p5'});
+    const txtContent = Object.assign(document.createElement('span'), {innerText: 'TEXT'});
+    const iptContent = Object.assign(document.createElement('textarea'), {className: 'hidden'});
+    iptContent.addEventListener('mousedown', stopBubble);
+    content.appendChild(txtContent);
+    content.appendChild(iptContent);
     el.appendChild(content);
 
     const actionBar = Object.assign(document.createElement('div'), {className: 'node-button-bar fill-width d-flex align-items-center'});
-    actionBar.appendChild(Object.assign(document.createElement('button'), {className: 'flex-grow-1', innerText: 'Edit'}));
-    actionBar.appendChild(Object.assign(document.createElement('button'), {className: 'flex-grow-1', innerText: 'Delete'}));
-    actionBar.appendChild(Object.assign(document.createElement('div'), {className: 'node-handle'}));
+    const btnEditOrDone = Object.assign(document.createElement('button'), {className: 'flex-grow-1', innerText: 'Edit'});
+    const btnDelete = Object.assign(document.createElement('button'), {className: 'flex-grow-1', innerText: 'Delete'});
+    const hdlLink = Object.assign(document.createElement('div'), {className: 'node-handle'});
+    hdlLink.addEventListener('mousedown', stopBubble);
+    actionBar.appendChild(btnEditOrDone);
+    actionBar.appendChild(btnDelete);
+    actionBar.appendChild(hdlLink);
     el.appendChild(actionBar);
 
+    let editing = false;
+    btnEditOrDone.addEventListener('click', () => {
+        editing = !editing;
+        if (editing) {
+            btnEditOrDone.innerText = 'Done';
+            iptContent.value = txtContent.innerText;
+            txtContent.classList.add('hidden');
+            iptContent.classList.remove('hidden');
+        } else {
+            txtContent.innerText = iptContent.value;
+            btnEditOrDone.innerText = 'Edit';
+            txtContent.classList.remove('hidden');
+            iptContent.classList.add('hidden');
+        }
+    });
 
     el.addEventListener('dragstart', event => {
         DRAG_STATE.id = node.id;
         DRAG_STATE.startOffsetX = event.offsetX - el.offsetLeft;
         DRAG_STATE.startOffsetY = event.offsetY - el.offsetTop;
-    });
-    el.addEventListener('mousedown', event => {
-        console.log('mousedown', event);
     });
     return el;
 }

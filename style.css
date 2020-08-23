@@ -5,6 +5,10 @@ html, body, .full {
     padding: 0;
 }
 
+.hidden {
+    display: none;
+}
+
 .overflow-hidden {
     overflow: hidden;
 }
@@ -120,6 +124,11 @@ button:active {
     height: 2px;
     margin: auto;
     background-color: #fff;
+}
+
+.node > .content > textarea {
+    width: 100%;
+    padding: .5em;
 }
 
 .node > .node-button-bar > button {
