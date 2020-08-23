@@ -5,6 +5,10 @@ html, body, .full {
     padding: 0;
 }
 
+.overflow-hidden {
+    overflow: hidden;
+}
+
 .fill-width {
     width: 100%;
 }

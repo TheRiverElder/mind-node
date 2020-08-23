@@ -10,15 +10,18 @@ const NODE_CONTAINER = document.getElementById('node-container');
 
 const NODES = {};
 
-let draggingNodeId = null;
+const DRAG_STATE = {
+    id: null,
+    startOffsetX: 0, // 开始时候鼠标相对于节点元素的偏移量
+    startOffsetY: 0, 
+};
 
 NODE_CONTAINER.addEventListener('dragend', event => {
-    console.log('dragend', draggingNodeId, event);
-    if (draggingNodeId) {
-        const x = event.clientX;
-        const y = event.clientY;
-        NODES[draggingNodeId].moveTo(x, y);
-        draggingNodeId = null;
+    if (DRAG_STATE.id) {
+        const x = event.offsetX - DRAG_STATE.startOffsetX;
+        const y = event.offsetY - DRAG_STATE.startOffsetY;
+        NODES[DRAG_STATE.id].moveTo(x, y);
+        DRAG_STATE.id = null;
     }
 });
 
@@ -34,17 +37,12 @@ function createNode() {
         id: genId(),
         el: null,
         moveTo(x, y) {
-            console.log('move');
-            this.el.top = y + 'px';
-            this.el.left = x + 'px';
+            this.el.style.left = x + 'px';
+            this.el.style.top = y + 'px';
         }
     };
 
     node.el = createNodeEl(node);
-
-
-
-
     return node;
 }
 
@@ -70,8 +68,12 @@ function createNodeEl(node) {
 
 
     el.addEventListener('dragstart', event => {
-        console.log('dragstart', event);
-        draggingNodeId = node.id;
+        DRAG_STATE.id = node.id;
+        DRAG_STATE.startOffsetX = event.offsetX - el.offsetLeft;
+        DRAG_STATE.startOffsetY = event.offsetY - el.offsetTop;
+    });
+    el.addEventListener('mousedown', event => {
+        console.log('mousedown', event);
     });
     return el;
 }
@@ -81,3 +83,5 @@ function createAndAppendNode() {
     NODES[node.id] = node;
     NODE_CONTAINER.appendChild(node.el);
 }
+
+createAndAppendNode();
