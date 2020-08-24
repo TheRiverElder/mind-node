@@ -28,7 +28,12 @@
                 <canvas id="links" class="full"></canvas>
 
                 <!-- 节点实际内容集合 -->
-                <div id="node-container" class="full overlay">
+                <div id="node-container" class="full overlay" 
+                    onmousedown="movePanelStart(event)" 
+                    onmousemove="movePanelMove(event)"
+                    onmouseup="movePanelEnd(event)"
+                    onmouseleave="movePanelEnd(event)"
+                >
                     <!-- 节点元素模板 -->
                     <template id="node-el-template">
                         <div class="node white-bg round shadow" draggable="true">

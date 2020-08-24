@@ -115,7 +115,7 @@ button:active {
     height: 10px;
     background-color: rgb(57, 59, 92);
     text-align: center;
-    cursor: move;
+    cursor: grab;
     padding-top: 4px;
 }
 
@@ -176,4 +176,8 @@ button:active {
     to {
         transform: rotate(360deg);
     }
+}
+
+#node-container.moving {
+    cursor: move;
 }

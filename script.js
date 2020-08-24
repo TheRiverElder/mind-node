@@ -29,12 +29,6 @@ window.addEventListener('resize', () => {
 
 const NODES = {};
 
-const PANEL = {
-    offsetX: 0,
-    offsetY: 0,
-    scale: 1,
-};
-
 const DRAG_STATE = {
     id: null,
     startOffsetX: 0, // 开始时候鼠标相对于节点元素的偏移量
@@ -44,6 +38,12 @@ const DRAG_STATE = {
 const LINK_STATE = {
     id: null,
     linkEndCb: null,
+};
+
+const PANEL = {
+    offsetX: 20,
+    offsetY: 20,
+    scale: 1,
 };
 
 NODE_CONTAINER.addEventListener('dragend', event => {
@@ -56,8 +56,62 @@ NODE_CONTAINER.addEventListener('dragend', event => {
     }
 });
 
+//#region 面板拖动
 
+const PANEL_MOVE_STATE = {
+    moving: false,
+    startPanelOffsetX: 0, // 开始时候面板的偏移量
+    startPanelOffsetY: 0, 
+    startOffsetX: 0, // 开始时候鼠标相对于节点元素的偏移量
+    startOffsetY: 0, 
+};
 
+function movePanelStart(event) {
+    if (event.button === 1 && !PANEL_MOVE_STATE.moving) { // 判断滚轮按下
+        PANEL_MOVE_STATE.moving = true;
+        PANEL_MOVE_STATE.startOffsetX = event.clientX;
+        PANEL_MOVE_STATE.startOffsetY = event.clientY;
+        PANEL_MOVE_STATE.startPanelOffsetX = PANEL.offsetX;
+        PANEL_MOVE_STATE.startPanelOffsetY = PANEL.offsetY;
+        NODE_CONTAINER.classList.add('moving');
+    }
+}
+
+function movePanelMove(event) {
+    if ((event.button === 1 || (event.buttons & 4) > 0) && PANEL_MOVE_STATE.moving) {
+        movePanelTo(
+            PANEL_MOVE_STATE.startPanelOffsetX + event.clientX - PANEL_MOVE_STATE.startOffsetX, 
+            PANEL_MOVE_STATE.startPanelOffsetY + event.clientY - PANEL_MOVE_STATE.startOffsetY);
+    }
+}
+
+function movePanelEnd(event) {
+    if (event.button === 1 && PANEL_MOVE_STATE.moving) {
+        movePanelTo(
+            PANEL_MOVE_STATE.startPanelOffsetX + event.clientX - PANEL_MOVE_STATE.startOffsetX, 
+            PANEL_MOVE_STATE.startPanelOffsetY + event.clientY - PANEL_MOVE_STATE.startOffsetY);
+        PANEL_MOVE_STATE.moving = false;
+        PANEL_MOVE_STATE.startOffsetX = 0;
+        PANEL_MOVE_STATE.startOffsetY = 0;
+        PANEL_MOVE_STATE.startPanelOffsetX = PANEL.offsetX;
+        PANEL_MOVE_STATE.startPanelOffsetY = PANEL.offsetY;
+        NODE_CONTAINER.classList.remove('moving');
+        
+    }
+}
+
+function movePanelTo(x, y) {
+    PANEL.offsetX = x;
+    PANEL.offsetY = y;
+    Object.values(NODES).forEach(node => node.redrawNode());
+    redrawLinks();
+}
+
+//#endregion
+
+/**
+ * 绘制链接的线条
+ */
 function redrawLinks() {
     const cxt = LINK_CANVAS.getContext('2d');
     cxt.clearRect(0, 0, LINK_CANVAS.width, LINK_CANVAS.clientHeight);
@@ -68,16 +122,16 @@ function redrawLinks() {
             continue;
         }
         const fromPort = node.getPort();
-        const x1 = fromPort.outX;
-        const y1 = fromPort.outY;
+        const x1 = fromPort.outX + PANEL.offsetX + 0.5;
+        const y1 = fromPort.outY + PANEL.offsetY + 0.5;
         for(let targetId of [...node.outLinks]) {
             const toPort = NODES[targetId].getPort();
-            const x2 = toPort.inX;
-            const y2 = toPort.inY;
-            const hdx = Math.abs(fromPort.outX - toPort.inX) / 2;
+            const x2 = toPort.inX + PANEL.offsetX + 0.5;
+            const y2 = toPort.inY + PANEL.offsetY + 0.5;
+            const hdx = Math.abs(x1 - x2) / 2;
             cxt.beginPath();
-            cxt.moveTo(x1 + 0.5, y1 + 0.5);
-            cxt.bezierCurveTo(x1 + hdx, y1, x2 - hdx, y2, x2 + 0.5, y2 + 0.5);
+            cxt.moveTo(x1, y1);
+            cxt.bezierCurveTo(x1 + hdx, y1, x2 - hdx, y2, x2, y2);
             cxt.stroke();
         }
     }
@@ -89,7 +143,7 @@ function redrawLinks() {
  * @param {Object} from 链接源
  * @param {Object} to 链接尾
  */
-function linkOrUnlink(from, to) {
+function toggleLink(from, to) {
     if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id)) {
         from.outLinks.add(to.id);
         to.inLinks.add(from.id);
@@ -106,20 +160,27 @@ function linkOrUnlink(from, to) {
 function createNode() {
     const node = {
         id: genId(),
+        x: 0,
+        y: 0,
         el: null,
         inLinks: new Set(),
         outLinks: new Set(),
         moveTo(x, y) {
-            this.el.style.left = x + 'px';
-            this.el.style.top = y + 'px';
+            this.x = x;
+            this.y = y;
+            this.redrawNode();
+        },
+        redrawNode() {
+            this.el.style.left = (this.x + PANEL.offsetX) + 'px';
+            this.el.style.top = (this.y + PANEL.offsetY) + 'px';
         },
         getPort() {
             const el = this.el;
             return {
-                inX: el.offsetLeft,
-                inY: el.offsetTop + 30,
-                outX: el.offsetLeft + el.offsetWidth,
-                outY: el.offsetTop + 30,
+                inX: this.x,
+                inY: this.y + 30,
+                outX: this.x + el.offsetWidth,
+                outY: this.y + 30,
             };
         },
     };
@@ -170,7 +231,7 @@ function createNodeEl(node) {
             LINK_STATE.linkEndCb = () => hdlLink.classList.remove('linking');
             hdlLink.classList.add('linking');
         } else {
-            linkOrUnlink(NODES[LINK_STATE.id], node);
+            toggleLink(NODES[LINK_STATE.id], node);
             LINK_STATE.linkEndCb();
             LINK_STATE.id = null;
             LINK_STATE.linkEndCb = null;
@@ -193,6 +254,7 @@ function createAndAppendNode() {
     const node = createNode();
     NODES[node.id] = node;
     NODE_CONTAINER.appendChild(node.el);
+    node.redrawNode();
 }
 
 /**
