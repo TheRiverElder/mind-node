@@ -9,14 +9,14 @@
     <body>
 
         <!-- 编辑器面板 -->
-        <div id="editor" class="full gray-bg d-flex flex-verticle">
+        <div id="editor" class="full gray-bg d-flex flex-vertical">
             <!-- 菜单 -->
             <div id="button-bar" class="white-bg shadow pa-p5">
                 <!-- 打开SL面板 -->
-                <button>SL</button>
+                <button onclick="openSLPanel()">SL</button>
 
                 <!-- 清空节点池 -->
-                <button>Clear</button>
+                <button onclick="clearNodes()">Clear</button>
 
                 <!-- 新增节点 -->
                 <button onclick="createAndAppendNode()">New Node</button>
@@ -63,8 +63,26 @@
         </div>
 
         <!-- SL面板 -->
-        <div>
+        <div id="sl-panel" class="overlay hidden">
+            <div class="white-bg full pa-1 d-flex flex-vertical">
+                <!-- SL菜单 -->
+                <div id="sl-button-bar" class="pa-p5">
+                    <!-- 保存 -->
+                    <button onclick="trySavePool()">Save</button>
 
+                    <!-- 载入 -->
+                    <button onclick="tryLoadPool()">Load</button>
+
+                    <!-- 复制 -->
+                    <button onclick="copyPool()">Copy</button>
+
+                    <!-- 退出 -->
+                    <button onclick="closeSLPanel()">Exit</button>
+                </div>
+
+                <!-- 数据输入输出 -->
+                <textarea id="pool-text" class="fill-width no-resize overflow-x-auto flex-grow-1"></textarea>
+            </div>
         </div>
     </body>
 

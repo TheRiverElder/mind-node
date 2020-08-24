@@ -64,6 +64,10 @@ button:active {
     box-shadow: 2px 2px 2px #ccc;
 }
 
+.pa-1 {
+    padding: 1em;
+}
+
 .pa-p5 {
     padding: .5em;
 }
@@ -76,7 +80,7 @@ button:active {
     display: flex;
 }
 
-.flex-verticle {
+.flex-vertical {
     flex-direction: column;
 }
 
@@ -184,4 +188,22 @@ button:active {
 
 #node-container.moving {
     cursor: move;
+}
+
+sl-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #000000a0;
+    padding: 1em;
+}
+
+.no-resize {
+    resize: none;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
 }

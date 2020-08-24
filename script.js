@@ -14,6 +14,8 @@ const POOL = document.getElementById('pool');
 const NODE_CONTAINER = document.getElementById('node-container');
 const LINK_CANVAS = document.getElementById('links');
 const NODE_EL_TEMPLATE = document.getElementById('node-el-template');
+const SL_PANEL = document.getElementById('sl-panel');
+const POOL_TEXT = document.getElementById('pool-text');
 
 function resizeCanvas() {
     LINK_CANVAS.width = POOL.offsetWidth;
@@ -29,24 +31,15 @@ window.addEventListener('resize', () => {
 
 const NODES = {};
 
-function deleteNode(id) {
-    const node = NODES[id];
-    [...node.inLinks].forEach(i => NODES[i].outLinks.delete(id));
-    [...node.outLinks].forEach(i => NODES[i].inLinks.delete(id));
-    delete NODES[id];
-    node.el.remove();
-    redrawLinks();
-}
-
-const LINK_STATE = {
-    id: null,
-    linkEndCb: null,
-};
-
 const PANEL = {
     offsetX: 20,
     offsetY: 20,
     scale: 1,
+};
+
+const LINK_STATE = {
+    id: null,
+    linkEndCb: null,
 };
 
 const DRAG_STATE = {
@@ -61,11 +54,9 @@ const DRAG_STATE = {
 
 NODE_CONTAINER.addEventListener('dragend', event => {
     if (DRAG_STATE.id) {
-        console.log(DRAG_STATE);
         const x = DRAG_STATE.startX + (event.offsetX - DRAG_STATE.startMouseX) - DRAG_STATE.mouseOffsetX;
         const y = DRAG_STATE.startY + (event.offsetY - DRAG_STATE.startMouseY) - DRAG_STATE.mouseOffsetY;
         NODES[DRAG_STATE.id].moveTo(x, y);
-        console.log(NODES[DRAG_STATE.id])
         DRAG_STATE.id = null;
         redrawLinks();
     }
@@ -163,21 +154,44 @@ function redrawLinks() {
     }
 }
 
+//#region 节点操作
 
 /**
  * 创建一个不存的的链接，或解除一个已存在的链接
  * @param {Object} from 链接源
  * @param {Object} to 链接尾
  */
-function toggleLink(from, to) {
+function toggleLink(fromId, toId) {
+    const from = NODES[fromId];
+    const to = NODES[toId];
     if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id)) {
         from.outLinks.add(to.id);
         to.inLinks.add(from.id);
-    } else {
+    } else if (fromId !== toId) {
         from.outLinks.delete(to.id);
         to.inLinks.delete(from.id);
     }
     redrawLinks();
+}
+
+/**
+ * 处理按下链接按钮时的处理逻辑
+ * @param {Number} id 要处理的节点ID
+ * @param {Function} cb 当链接结束后要执行的逻辑
+ */
+function handleLinkAction(id, cb) {
+    if (LINK_STATE.id) {
+        toggleLink(LINK_STATE.id, id);
+        if (LINK_STATE.linkEndCb) {
+            LINK_STATE.linkEndCb();
+        }
+        cb();
+        LINK_STATE.id = null;
+        LINK_STATE.linkEndCb = null;
+    } else {
+        LINK_STATE.id = id;
+        LINK_STATE.linkEndCb = cb;
+    }
 }
 
 /**
@@ -188,6 +202,7 @@ function createNode() {
         id: genId(),
         x: 0,
         y: 0,
+        content: 'TEXT',
         el: null,
         inLinks: new Set(),
         outLinks: new Set(),
@@ -240,6 +255,7 @@ function createNodeEl(node) {
             iptContent.classList.remove('hidden');
         } else {
             txtContent.innerText = iptContent.value;
+            node.content = iptContent.value;
             btnEditOrDone.innerText = 'Edit';
             txtContent.classList.remove('hidden');
             iptContent.classList.add('hidden');
@@ -248,22 +264,10 @@ function createNodeEl(node) {
 
     btnDelete.addEventListener('click', () => deleteNode(node.id));
 
+    const cb = () => hdlLink.classList.remove('linking');
     hdlLink.addEventListener('click', () => {
-        if (LINK_STATE.id === node.id) {
-            LINK_STATE.id = null;
-            LINK_STATE.linkEndCb = null;
-            hdlLink.classList.remove('linking');
-        } else if (LINK_STATE.id === null) {
-            LINK_STATE.id = node.id;
-            LINK_STATE.linkEndCb = () => hdlLink.classList.remove('linking');
-            hdlLink.classList.add('linking');
-        } else {
-            toggleLink(NODES[LINK_STATE.id], node);
-            LINK_STATE.linkEndCb();
-            LINK_STATE.id = null;
-            LINK_STATE.linkEndCb = null;
-            hdlLink.classList.remove('linking');
-        }
+        hdlLink.classList.add('linking');
+        handleLinkAction(node.id, cb);
     });
 
     el.addEventListener('dragstart', event => {
@@ -279,6 +283,35 @@ function createNodeEl(node) {
 }
 
 /**
+ * 删除节点
+ * @param {Number} id 要删除节点的ID 
+ */
+function deleteNode(id) {
+    const node = NODES[id];
+    [...node.inLinks].forEach(i => NODES[i].outLinks.delete(id));
+    [...node.outLinks].forEach(i => NODES[i].inLinks.delete(id));
+    delete NODES[id];
+    node.el.remove();
+    redrawLinks();
+    if (LINK_STATE.id === id) {
+        LINK_STATE.id = null;
+        LINK_STATE.linkEndCb = null;
+    }
+}
+
+function clearNodes() {
+    Object.values(NODES).forEach(node => {
+        node.el.remove();
+        delete NODES[node.id];
+    });
+    redrawLinks();
+    LINK_STATE.id = null;
+    LINK_STATE.linkEndCb = null;
+}
+
+//#endregion
+
+/**
  * 创建节点并添加到HTML页面中
  */
 function createAndAppendNode() {
@@ -288,9 +321,57 @@ function createAndAppendNode() {
     node.redrawNode();
 }
 
-/**
- * 初始化
- */
-createAndAppendNode();
+//#region 导入导出
+
+function loadPool(str) {
+    clearNodes();
+    const o = JSON.parse(str);
+    Object.assign(PANEL, o.panel);
+    o.nodes.forEach(node => {
+        NODES[node.id] = node;
+        node.el = createNodeEl(node);
+        NODE_CONTAINER.appendChild(node.el);
+        node.redrawNode();
+    });
+    redrawLinks();
+}
+
+function savePool() {
+    return JSON.stringify({
+        nodes: Object.values(NODES).map(node => ({
+            id: node.id,
+            x: node.x,
+            y: node.x,
+            content: node.content,
+        })),
+        panel: PANEL,
+    });
+}
+
+function tryLoadPool() {
+    loadPool(POOL_TEXT.value);
+}
+
+function trySavePool() {
+    POOL_TEXT.value = savePool();
+}
+
+function copyPool() {
+    POOL_TEXT.select();
+    document.execCommand("Copy")
+}
+
+function openSLPanel() {
+    SL_PANEL.classList.remove('hidden');
+}
+
+function closeSLPanel() {
+    SL_PANEL.classList.add('hidden');
+}
+
+
+//#endregion
+
+//初始化
 resizeCanvas();
 redrawLinks();
