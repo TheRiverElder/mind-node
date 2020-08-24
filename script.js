@@ -325,15 +325,19 @@ function createAndAppendNode() {
 
 function loadPool(str) {
     clearNodes();
-    const o = JSON.parse(str);
-    Object.assign(PANEL, o.panel);
-    o.nodes.forEach(node => {
-        NODES[node.id] = node;
-        node.el = createNodeEl(node);
-        NODE_CONTAINER.appendChild(node.el);
-        node.redrawNode();
-    });
-    redrawLinks();
+    try {
+        const pool = JSON.parse(str);
+        Object.assign(PANEL, pool.panel);
+        pool.nodes.forEach(node => {
+            NODES[node.id] = node;
+            node.el = createNodeEl(node);
+            NODE_CONTAINER.appendChild(node.el);
+            node.redrawNode();
+        });
+        redrawLinks();
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 function savePool() {
@@ -353,7 +357,9 @@ function tryLoadPool() {
 }
 
 function trySavePool() {
-    POOL_TEXT.value = savePool();
+    const data = savePool();
+    POOL_TEXT.value = data;
+    localStorage.setItem('mind-node-pool', data);
 }
 
 function copyPool() {
@@ -375,3 +381,7 @@ function closeSLPanel() {
 //初始化
 resizeCanvas();
 redrawLinks();
+const loadedPool = localStorage.getItem('mind-node-pool') || null;
+if (loadedPool) {
+    loadPool(loadedPool);
+}
