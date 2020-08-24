@@ -126,6 +126,10 @@ button:active {
     background-color: #fff;
 }
 
+.node > .content > span {
+    word-wrap: break-word;
+}
+
 .node > .content > textarea {
     width: 100%;
     padding: .5em;

@@ -29,6 +29,15 @@ window.addEventListener('resize', () => {
 
 const NODES = {};
 
+function deleteNode(id) {
+    const node = NODES[id];
+    [...node.inLinks].forEach(i => NODES[i].outLinks.delete(id));
+    [...node.outLinks].forEach(i => NODES[i].inLinks.delete(id));
+    delete NODES[id];
+    node.el.remove();
+    redrawLinks();
+}
+
 const LINK_STATE = {
     id: null,
     linkEndCb: null,
@@ -236,6 +245,8 @@ function createNodeEl(node) {
             iptContent.classList.add('hidden');
         }
     });
+
+    btnDelete.addEventListener('click', () => deleteNode(node.id));
 
     hdlLink.addEventListener('click', () => {
         if (LINK_STATE.id === node.id) {
