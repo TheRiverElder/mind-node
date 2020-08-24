@@ -29,21 +29,30 @@
 
                 <!-- 节点实际内容集合 -->
                 <div id="node-container" class="full overlay">
-                    <!-- <div class="node white-bg round shadow">
-                        <div class="drag-bar">
-                            <div class="drag-bar-icon round"></div>
+                    <!-- 节点元素模板 -->
+                    <template id="node-el-template">
+                        <div class="node white-bg round shadow" draggable="true">
+                            <!-- 拖动条，仅仅作为装饰 -->
+                            <div class="drag-bar">
+                                <div class="drag-bar-icon round"></div>
+                            </div>
+    
+                            <!-- 正文 -->
+                            <div class="content pa-p5">
+                                <span>TEXT</span>
+                                <textarea class="hidden" draggable="false">TEXT</textarea>
+                            </div>
+    
+                            <!-- 操作按键 -->
+                            <div class="node-action-bar fill-width d-flex align-items-center">
+                                <button class="flex-grow-1">Edit</button>
+    
+                                <button class="flex-grow-1">Delete</button>
+                                
+                                <div class="node-handle" draggable="false"></div>
+                            </div>
                         </div>
-
-                        <div class="content pa-p5">TEXT</div>
-
-                        <div class="node-button-bar fill-width d-flex align-items-center">
-                            <button class="flex-grow-1">Edit</button>
-
-                            <button class="flex-grow-1">Delete</button>
-                            
-                            <div class="node-handle"></div>
-                        </div>
-                    </div> -->
+                    </template>
                 </div>
             </div>
         </div>

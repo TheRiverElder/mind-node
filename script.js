@@ -13,6 +13,7 @@ function stopBubble(event) {
 const POOL = document.getElementById('pool');
 const NODE_CONTAINER = document.getElementById('node-container');
 const LINK_CANVAS = document.getElementById('links');
+const NODE_EL_TEMPLATE = document.getElementById('node-el-template');
 
 function resizeCanvas() {
     LINK_CANVAS.width = POOL.offsetWidth;
@@ -67,13 +68,16 @@ function redrawLinks() {
             continue;
         }
         const fromPort = node.getPort();
+        const x1 = fromPort.outX;
+        const y1 = fromPort.outY;
         for(let targetId of [...node.outLinks]) {
-            const target = NODES[targetId];
-            const toPort = target.getPort();
-            const middle = (fromPort.outX + toPort.inX) / 2;
+            const toPort = NODES[targetId].getPort();
+            const x2 = toPort.inX;
+            const y2 = toPort.inY;
+            const hdx = Math.abs(fromPort.outX - toPort.inX) / 2;
             cxt.beginPath();
-            cxt.moveTo(fromPort.outX + 0.5, fromPort.outY + 0.5);
-            cxt.bezierCurveTo(middle, fromPort.outY, middle, toPort.inY, toPort.inX + 0.5, toPort.inY + 0.5);
+            cxt.moveTo(x1 + 0.5, y1 + 0.5);
+            cxt.bezierCurveTo(x1 + hdx, y1, x2 - hdx, y2, x2 + 0.5, y2 + 0.5);
             cxt.stroke();
         }
     }
@@ -85,13 +89,11 @@ function redrawLinks() {
  * @param {Object} from 链接源
  * @param {Object} to 链接尾
  */
-function link(from, to) {
+function linkOrUnlink(from, to) {
     if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id)) {
-        console.log('link');
         from.outLinks.add(to.id);
         to.inLinks.add(from.id);
     } else {
-        console.log('unlink');
         from.outLinks.delete(to.id);
         to.inLinks.delete(from.id);
     }
@@ -99,7 +101,7 @@ function link(from, to) {
 }
 
 /**
- * 创建节点
+ * 创建节点及其对应的HTML元素
  */
 function createNode() {
     const node = {
@@ -131,33 +133,16 @@ function createNode() {
  * @param {Object} node 节点
  */
 function createNodeEl(node) {
-    const el = Object.assign(document.createElement('div'), {
-        id: node.id,
-        className: 'node white-bg round shadow',
-        draggable: true
-    });
+    const el = Object.assign(document.importNode(NODE_EL_TEMPLATE.content, true).children[0], { id: node.id });
 
-    const hdlMove = Object.assign(document.createElement('div'), {className: 'drag-bar'});
-    hdlMove.appendChild(Object.assign(document.createElement('div'), {className: 'drag-bar-icon round'}));
-    el.appendChild(hdlMove);
-
-    const content = Object.assign(document.createElement('div'), {className: 'content pa-p5'});
-    const txtContent = Object.assign(document.createElement('span'), {innerText: 'TEXT'});
-    const iptContent = Object.assign(document.createElement('textarea'), {className: 'hidden', draggable: false});
+    const content = el.getElementsByClassName('content')[0];
+    const txtContent = content.getElementsByTagName('span')[0];
+    const iptContent = content.getElementsByTagName('textarea')[0];
     // iptContent.addEventListener('mousedown', stopBubble);
-    content.appendChild(txtContent);
-    content.appendChild(iptContent);
-    el.appendChild(content);
 
-    const actionBar = Object.assign(document.createElement('div'), {className: 'node-button-bar fill-width d-flex align-items-center'});
-    const btnEditOrDone = Object.assign(document.createElement('button'), {className: 'flex-grow-1', innerText: 'Edit'});
-    const btnDelete = Object.assign(document.createElement('button'), {className: 'flex-grow-1', innerText: 'Delete'});
-    const hdlLink = Object.assign(document.createElement('div'), {className: 'node-handle', draggable: false});
-    // hdlLink.addEventListener('mousedown', stopBubble);
-    actionBar.appendChild(btnEditOrDone);
-    actionBar.appendChild(btnDelete);
-    actionBar.appendChild(hdlLink);
-    el.appendChild(actionBar);
+    const actionBar = el.getElementsByClassName('node-action-bar')[0];
+    const [btnEditOrDone, btnDelete, hdlLink] = actionBar.children;
+    // hdlLink.addEventListener('drag', stopBubble);
 
     let editing = false;
     btnEditOrDone.addEventListener('click', () => {
@@ -185,7 +170,7 @@ function createNodeEl(node) {
             LINK_STATE.linkEndCb = () => hdlLink.classList.remove('linking');
             hdlLink.classList.add('linking');
         } else {
-            link(NODES[LINK_STATE.id], node);
+            linkOrUnlink(NODES[LINK_STATE.id], node);
             LINK_STATE.linkEndCb();
             LINK_STATE.id = null;
             LINK_STATE.linkEndCb = null;

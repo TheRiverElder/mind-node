@@ -131,7 +131,7 @@ button:active {
     padding: .5em;
 }
 
-.node > .node-button-bar > button {
+.node > .node-action-bar > button {
     background-color: #fff;
     color: #ccc;
     border: none;
@@ -140,12 +140,12 @@ button:active {
     transition: background-color 200ms, color 200ms;
 }
 
-.node > .node-button-bar > button:hover {
+.node > .node-action-bar > button:hover {
     background-color: #eee;
     color: #888;
 }
 
-.node >  .node-button-bar > .node-handle {
+.node >  .node-action-bar > .node-handle {
     height: 1em;
     width: 1em;
     margin: 0 0.2em;
@@ -154,11 +154,11 @@ button:active {
     transition: border-top-right-radius 500ms, border-bottom-left-radius 500ms, background-color 500ms;
 }
 
-.node >  .node-button-bar > .node-handle:hover {
+.node >  .node-action-bar > .node-handle:hover {
     background-color: rgb(59, 138, 230);
 }
 
-.node >  .node-button-bar > .node-handle.linking {
+.node >  .node-action-bar > .node-handle.linking {
     border-top-right-radius: 0;
     border-bottom-left-radius: 0;
     background-color: rgb(57, 59, 92);
