@@ -42,6 +42,7 @@ const PANEL = {
     offsetX: 20,
     offsetY: 20,
     scale: 1,
+    vertical: false,
 };
 
 const LINK_STATE = {
@@ -142,10 +143,14 @@ function redrawLinks() {
             const toPort = NODES[targetId].getPort();
             const x2 = toPort.inX + PANEL.offsetX + 0.5;
             const y2 = toPort.inY + PANEL.offsetY + 0.5;
-            const hdx = Math.abs(x1 - x2) / 2;
+            const hd = Math.abs(PANEL.vertical ? (y1 - y2) : (x1 - x2)) / 2;
             cxt.beginPath();
             cxt.moveTo(x1, y1);
-            cxt.bezierCurveTo(x1 + hdx, y1, x2 - hdx, y2, x2, y2);
+            if (PANEL.vertical) {
+                cxt.bezierCurveTo(x1, y1 + hd, x2, y2 - hd, x2, y2);
+            } else {
+                cxt.bezierCurveTo(x1 + hd, y1, x2 - hd, y2, x2, y2);
+            }
             cxt.stroke();
             const arrowCX = (x1 + x2) / 2;
             const arrowCY = (y1 + y2) / 2;
@@ -178,6 +183,11 @@ function toggleLink(fromId, toId) {
         from.outLinks.delete(to.id);
         to.inLinks.delete(from.id);
     }
+    redrawLinks();
+}
+
+function toggleVertical() {
+    PANEL.vertical = !PANEL.vertical;
     redrawLinks();
 }
 
@@ -224,7 +234,12 @@ function createNode(prev = {}) {
             this.el.style.top = (this.y + PANEL.offsetY) + 'px';
         },
         getPort() {
-            return {
+            return PANEL.vertical ? {
+                inX: this.x + this.el.offsetWidth / 2,
+                inY: this.y,
+                outX: this.x + this.el.offsetWidth / 2,
+                outY: this.y + this.el.offsetHeight,
+            } : {
                 inX: this.x,
                 inY: this.y + 30,
                 outX: this.x + this.el.offsetWidth,
