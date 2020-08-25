@@ -207,8 +207,8 @@ function handleLinkAction(id, cb) {
 function createNode(prev = {}) {
     const node = {
         id: prev.id || genId(),
-        x: prev.x || 0,
-        y: prev.y || 0,
+        x: prev.x || (NODE_CONTAINER.offsetWidth / 2 - PANEL.offsetX ),
+        y: prev.y || (NODE_CONTAINER.offsetHeight / 2 - PANEL.offsetY),
         content: prev.content || 'TEXT',
         el: null,
         inLinks: new Set(prev.inLinks || []),
