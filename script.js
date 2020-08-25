@@ -376,6 +376,7 @@ function tryLoadPool() {
 function trySavePool() {
     const data = savePool();
     POOL_TEXT.value = data;
+    cachePool();
 }
 
 function cachePool(data) {
