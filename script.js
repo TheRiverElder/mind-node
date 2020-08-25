@@ -28,6 +28,13 @@ window.addEventListener('resize', () => {
 });
 
 
+window.addEventListener('keydown', event => {
+    if (event.key === 's' && event.ctrlKey) {
+        cachePool();
+        event.preventDefault();
+    }
+});
+
 
 const NODES = {};
 
@@ -206,6 +213,7 @@ function createNode(prev = {}) {
         el: null,
         inLinks: new Set(prev.inLinks || []),
         outLinks: new Set(prev.outLinks || []),
+        updateEl: null,
         moveTo(x, y) {
             this.x = x;
             this.y = y;
@@ -279,6 +287,11 @@ function createNodeEl(node) {
         DRAG_STATE.mouseOffsetX = event.offsetX;
         DRAG_STATE.mouseOffsetY = event.offsetY;
     });
+
+    node.updateEl = () => {
+        txtContent.innerText = node.content;
+        iptContent.value = node.content;
+    };
     return el;
 }
 
@@ -333,6 +346,7 @@ function loadPool(str) {
                 NODES[node.id] = node;
                 NODE_CONTAINER.appendChild(node.el);
                 node.redrawNode();
+                node.updateEl();
             });
             redrawLinks();
         } catch (e) {
@@ -346,7 +360,7 @@ function savePool() {
         nodes: Object.values(NODES).map(node => ({
             id: node.id,
             x: node.x,
-            y: node.x,
+            y: node.y,
             content: node.content,
             inLinks: [...node.inLinks],
             outLinks: [...node.outLinks],
@@ -362,7 +376,14 @@ function tryLoadPool() {
 function trySavePool() {
     const data = savePool();
     POOL_TEXT.value = data;
+}
+
+function cachePool(data) {
+    if (!data) {
+        data = savePool();
+    }
     localStorage.setItem('mind-node-pool', data);
+    console.debug('cache finished');
 }
 
 function copyPool() {
