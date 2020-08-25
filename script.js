@@ -164,10 +164,10 @@ function redrawLinks() {
 function toggleLink(fromId, toId) {
     const from = NODES[fromId];
     const to = NODES[toId];
-    if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id)) {
+    if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id) && fromId !== toId) {
         from.outLinks.add(to.id);
         to.inLinks.add(from.id);
-    } else if (fromId !== toId) {
+    } else {
         from.outLinks.delete(to.id);
         to.inLinks.delete(from.id);
     }
@@ -197,15 +197,15 @@ function handleLinkAction(id, cb) {
 /**
  * 创建节点及其对应的HTML元素
  */
-function createNode() {
+function createNode(prev = {}) {
     const node = {
-        id: genId(),
-        x: 0,
-        y: 0,
-        content: 'TEXT',
+        id: prev.id || genId(),
+        x: prev.x || 0,
+        y: prev.y || 0,
+        content: prev.content || 'TEXT',
         el: null,
-        inLinks: new Set(),
-        outLinks: new Set(),
+        inLinks: new Set(prev.inLinks || []),
+        outLinks: new Set(prev.outLinks || []),
         moveTo(x, y) {
             this.x = x;
             this.y = y;
@@ -324,19 +324,20 @@ function createAndAppendNode() {
 //#region 导入导出
 
 function loadPool(str) {
-    clearNodes();
-    try {
-        const pool = JSON.parse(str);
-        Object.assign(PANEL, pool.panel);
-        pool.nodes.forEach(node => {
-            NODES[node.id] = node;
-            node.el = createNodeEl(node);
-            NODE_CONTAINER.appendChild(node.el);
-            node.redrawNode();
-        });
-        redrawLinks();
-    } catch (e) {
-        console.log(e);
+    if (str) {
+        try {
+            const pool = JSON.parse(str);
+            Object.assign(PANEL, pool.panel);
+            clearNodes();
+            pool.nodes.map(n => createNode(n)).forEach(node => {
+                NODES[node.id] = node;
+                NODE_CONTAINER.appendChild(node.el);
+                node.redrawNode();
+            });
+            redrawLinks();
+        } catch (e) {
+            console.log(e);
+        }
     }
 }
 
@@ -347,6 +348,8 @@ function savePool() {
             x: node.x,
             y: node.x,
             content: node.content,
+            inLinks: [...node.inLinks],
+            outLinks: [...node.outLinks],
         })),
         panel: PANEL,
     });

@@ -190,14 +190,14 @@ button:active {
     cursor: move;
 }
 
-sl-panel {
+#sl-panel {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
     background-color: #000000a0;
-    padding: 1em;
+    padding: 2em;
 }
 
 .no-resize {
