@@ -32,14 +32,14 @@
 
                 <!-- 节点实际内容集合 -->
                 <div id="node-container" class="full overlay" 
-                    onmousedown="movePanelStart(event)" 
-                    onmousemove="movePanelMove(event)"
-                    onmouseup="movePanelEnd(event)"
-                    onmouseleave="movePanelEnd(event)"
+                    onmousedown="startMovePanel(event)" 
+                    onmousemove="onMouseMove(event)"
+                    onmouseup="onMouseUp(event)"
+                    onmouseleave="onMouseLeave(event)"
                 >
                     <!-- 节点元素模板 -->
                     <template id="node-el-template">
-                        <div class="node white-bg round shadow" draggable="true">
+                        <div class="node white-bg round shadow">
                             <!-- 拖动条，仅仅作为装饰 -->
                             <div class="drag-bar">
                                 <div class="drag-bar-icon round"></div>
@@ -48,16 +48,16 @@
                             <!-- 正文 -->
                             <div class="content pa-p5">
                                 <span>TEXT</span>
-                                <textarea class="hidden" draggable="false">TEXT</textarea>
+                                <textarea class="hidden">TEXT</textarea>
                             </div>
     
                             <!-- 操作按键 -->
                             <div class="node-action-bar fill-width d-flex align-items-center">
                                 <button class="flex-grow-1">Edit</button>
+                                
+                                <div class="node-handle""></div>
     
                                 <button class="flex-grow-1">Delete</button>
-                                
-                                <div class="node-handle" draggable="false"></div>
                             </div>
                         </div>
                     </template>

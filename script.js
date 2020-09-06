@@ -14,7 +14,7 @@ const POOL = document.getElementById('pool');
 const NODE_CONTAINER = document.getElementById('node-container');
 const LINK_CANVAS = document.getElementById('links');
 const NODE_EL_TEMPLATE = document.getElementById('node-el-template');
-const SL_PANEL = document.getElementById('sl-panel');
+const SL_PANEL = document.getElementById('sl-DATA.panel');
 const POOL_TEXT = document.getElementById('pool-text');
 
 function resizeCanvas() {
@@ -36,13 +36,14 @@ window.addEventListener('keydown', event => {
 });
 
 
-const NODES = {};
-
-const PANEL = {
-    offsetX: 20,
-    offsetY: 20,
-    scale: 1,
-    vertical: false,
+const DATA = {
+    nodes: {},
+    panel: {
+        offsetX: 20,
+        offsetY: 20,
+        scale: 1,
+        vertical: false,
+    }
 };
 
 const LINK_STATE = {
@@ -50,21 +51,31 @@ const LINK_STATE = {
     linkEndCb: null,
 };
 
-const DRAG_STATE = {
+const MOUSE_STATE = {
+    action: null, // 'drag' | 'move' | 'select'
     id: null,
-    startX: 0,
-    startY: 0, 
-    startMouseX: 0,
-    startMouseY: 0,
-    mouseOffsetX: 0, // 开始时候鼠标相对于节点元素的偏移量
-    mouseOffsetY: 0,
+    startMouseX: 0, // 开始时候鼠标按下的位置
+    startMouseY: 0, 
+    startX: 0, // 暂存开始时候的状态
+    startY: 0,
+
+    reset() {
+        Object.assign(this, {
+            action: null,
+            id: null,
+            startX: 0,
+            startY: 0, 
+            startStateX: 0, 
+            startStateY: 0,
+        });
+    }
 };
 
 NODE_CONTAINER.addEventListener('dragend', event => {
     if (DRAG_STATE.id) {
         const x = DRAG_STATE.startX + (event.offsetX - DRAG_STATE.startMouseX) - DRAG_STATE.mouseOffsetX;
         const y = DRAG_STATE.startY + (event.offsetY - DRAG_STATE.startMouseY) - DRAG_STATE.mouseOffsetY;
-        NODES[DRAG_STATE.id].moveTo(x, y);
+        DATA.DATA.nodes[DRAG_STATE.id].moveTo(x, y);
         DRAG_STATE.id = null;
         redrawLinks();
     }
@@ -72,52 +83,70 @@ NODE_CONTAINER.addEventListener('dragend', event => {
 
 //#region 面板拖动
 
-const PANEL_MOVE_STATE = {
-    moving: false,
-    startOffsetX: 0, // 开始时候面板的偏移量
-    startOffsetY: 0, 
-    startMouseX: 0, // 开始时候鼠标相对于节点元素的偏移量
-    startMouseY: 0, 
-};
-
-function movePanelStart(event) {
-    if (event.button === 1 && !PANEL_MOVE_STATE.moving) { // 判断滚轮按下
-        PANEL_MOVE_STATE.moving = true;
-        PANEL_MOVE_STATE.startMouseX = event.clientX;
-        PANEL_MOVE_STATE.startMouseY = event.clientY;
-        PANEL_MOVE_STATE.startOffsetX = PANEL.offsetX;
-        PANEL_MOVE_STATE.startOffsetY = PANEL.offsetY;
+function startMovePanel(event) {
+    if (MOUSE_STATE.action) {
+        return;
+    }
+    if (event.button === 1) { // 判断滚轮按下
+        MOUSE_STATE.action = 'move';
+        MOUSE_STATE.startMouseX = event.clientX;
+        MOUSE_STATE.startMouseY = event.clientY;
+        MOUSE_STATE.startX = DATA.panel.offsetX;
+        MOUSE_STATE.startY = DATA.panel.offsetY;
         NODE_CONTAINER.classList.add('moving');
+    } else if (event.button === 0) {
+        // MOUSE_STATE.action = 'select';
+        // MOUSE_STATE.startX = event.clientX;
+        // MOUSE_STATE.startY = event.clientY;
     }
 }
 
-function movePanelMove(event) {
-    if ((event.button === 1 || (event.buttons & 4) > 0) && PANEL_MOVE_STATE.moving) {
-        movePanelTo(
-            PANEL_MOVE_STATE.startOffsetX + event.clientX - PANEL_MOVE_STATE.startMouseX, 
-            PANEL_MOVE_STATE.startOffsetY + event.clientY - PANEL_MOVE_STATE.startMouseY);
+function onMouseMove(event) {
+    if (!MOUSE_STATE.action) {
+        return;
+    }
+    const dx = event.clientX - MOUSE_STATE.startMouseX;
+    const dy = event.clientY - MOUSE_STATE.startMouseY;
+
+    if (MOUSE_STATE.action === 'move') {
+        movePanelTo(MOUSE_STATE.startX + dx, MOUSE_STATE.startY + dy);
+    } else if (MOUSE_STATE.action === 'drag') {
+        const node = DATA.nodes[MOUSE_STATE.id];
+        node.moveTo(MOUSE_STATE.startX + dx, MOUSE_STATE.startY + dy);
+        redrawLinks();
     }
 }
 
-function movePanelEnd(event) {
-    if (event.button === 1 && PANEL_MOVE_STATE.moving) {
-        movePanelTo(
-            PANEL_MOVE_STATE.startOffsetX + event.clientX - PANEL_MOVE_STATE.startMouseX, 
-            PANEL_MOVE_STATE.startOffsetY + event.clientY - PANEL_MOVE_STATE.startMouseY);
-        PANEL_MOVE_STATE.moving = false;
-        PANEL_MOVE_STATE.startMouseX = 0;
-        PANEL_MOVE_STATE.startMouseY = 0;
-        PANEL_MOVE_STATE.startOffsetX = PANEL.offsetX;
-        PANEL_MOVE_STATE.startOffsetY = PANEL.offsetY;
+function onMouseUp(event) {
+    if (!MOUSE_STATE.action) {
+        return;
+    }
+    const dx = event.clientX - MOUSE_STATE.startMouseX;
+    const dy = event.clientY - MOUSE_STATE.startMouseY;
+
+    if (MOUSE_STATE.action === 'move') {
+        movePanelTo(MOUSE_STATE.startX + dx, MOUSE_STATE.startY + dy);
+        MOUSE_STATE.reset();
         NODE_CONTAINER.classList.remove('moving');
-        
+    } else if (MOUSE_STATE.action === 'drag') {
+        const node = DATA.nodes[MOUSE_STATE.id];
+        node.moveTo(MOUSE_STATE.startX + dx, MOUSE_STATE.startY + dy);
+        console.log('node pos', node.x, node.y);
+        MOUSE_STATE.reset();
+        NODE_CONTAINER.classList.remove('dragging');
     }
+}
+
+function onMouseLeave() {
+    MOUSE_STATE.reset();
+    NODE_CONTAINER.classList.remove('moving');
+    NODE_CONTAINER.classList.remove('dragging');
 }
 
 function movePanelTo(x, y) {
-    PANEL.offsetX = x;
-    PANEL.offsetY = y;
-    Object.values(NODES).forEach(node => node.redrawNode());
+    DATA.panel.offsetX = x;
+    DATA.panel.offsetY = y;
+    Object.values(DATA.nodes).forEach(node => node.redrawNode());
     redrawLinks();
 }
 
@@ -132,21 +161,21 @@ function redrawLinks() {
     cxt.strokeStyle = '#888';
     cxt.fillStyle = '#888';
     cxt.lineWidth = 1.5;
-    for (let node of Object.values(NODES)) {
+    for (let node of Object.values(DATA.nodes)) {
         if (!node.outLinks.size) {
             continue;
         }
         const fromPort = node.getPort();
-        const x1 = fromPort.outX + PANEL.offsetX + 0.5;
-        const y1 = fromPort.outY + PANEL.offsetY + 0.5;
+        const x1 = fromPort.outX + DATA.panel.offsetX + 0.5;
+        const y1 = fromPort.outY + DATA.panel.offsetY + 0.5;
         for(let targetId of [...node.outLinks]) {
-            const toPort = NODES[targetId].getPort();
-            const x2 = toPort.inX + PANEL.offsetX + 0.5;
-            const y2 = toPort.inY + PANEL.offsetY + 0.5;
-            const hd = Math.abs(PANEL.vertical ? (y1 - y2) : (x1 - x2)) / 2;
+            const toPort = DATA.nodes[targetId].getPort();
+            const x2 = toPort.inX + DATA.panel.offsetX + 0.5;
+            const y2 = toPort.inY + DATA.panel.offsetY + 0.5;
+            const hd = Math.abs(DATA.panel.vertical ? (y1 - y2) : (x1 - x2)) / 2;
             cxt.beginPath();
             cxt.moveTo(x1, y1);
-            if (PANEL.vertical) {
+            if (DATA.panel.vertical) {
                 cxt.bezierCurveTo(x1, y1 + hd, x2, y2 - hd, x2, y2);
             } else {
                 cxt.bezierCurveTo(x1 + hd, y1, x2 - hd, y2, x2, y2);
@@ -174,8 +203,8 @@ function redrawLinks() {
  * @param {Object} to 链接尾
  */
 function toggleLink(fromId, toId) {
-    const from = NODES[fromId];
-    const to = NODES[toId];
+    const from = DATA.nodes[fromId];
+    const to = DATA.nodes[toId];
     if (!from.outLinks.has(to.id) && !to.inLinks.has(from.id) && fromId !== toId) {
         from.outLinks.add(to.id);
         to.inLinks.add(from.id);
@@ -187,7 +216,7 @@ function toggleLink(fromId, toId) {
 }
 
 function toggleVertical() {
-    PANEL.vertical = !PANEL.vertical;
+    DATA.panel.vertical = !DATA.panel.vertical;
     redrawLinks();
 }
 
@@ -217,8 +246,8 @@ function handleLinkAction(id, cb) {
 function createNode(prev = {}) {
     const node = {
         id: prev.id || genId(),
-        x: prev.x || (NODE_CONTAINER.offsetWidth / 2 - PANEL.offsetX ),
-        y: prev.y || (NODE_CONTAINER.offsetHeight / 2 - PANEL.offsetY),
+        x: prev.x || (NODE_CONTAINER.offsetWidth / 2 - DATA.panel.offsetX ),
+        y: prev.y || (NODE_CONTAINER.offsetHeight / 2 - DATA.panel.offsetY),
         content: prev.content || 'TEXT',
         el: null,
         inLinks: new Set(prev.inLinks || []),
@@ -230,11 +259,11 @@ function createNode(prev = {}) {
             this.redrawNode();
         },
         redrawNode() {
-            this.el.style.left = (this.x + PANEL.offsetX) + 'px';
-            this.el.style.top = (this.y + PANEL.offsetY) + 'px';
+            this.el.style.left = (this.x + DATA.panel.offsetX) + 'px';
+            this.el.style.top = (this.y + DATA.panel.offsetY) + 'px';
         },
         getPort() {
-            return PANEL.vertical ? {
+            return DATA.panel.vertical ? {
                 inX: this.x + this.el.offsetWidth / 2,
                 inY: this.y,
                 outX: this.x + this.el.offsetWidth / 2,
@@ -259,13 +288,14 @@ function createNode(prev = {}) {
 function createNodeEl(node) {
     const el = Object.assign(document.importNode(NODE_EL_TEMPLATE.content, true).children[0], { id: node.id });
 
+    const dragBar = el.getElementsByClassName('drag-bar')[0];
     const content = el.getElementsByClassName('content')[0];
     const txtContent = content.getElementsByTagName('span')[0];
     const iptContent = content.getElementsByTagName('textarea')[0];
     // iptContent.addEventListener('mousedown', stopBubble);
 
     const actionBar = el.getElementsByClassName('node-action-bar')[0];
-    const [btnEditOrDone, btnDelete, hdlLink] = actionBar.children;
+    const [btnEditOrDone, hdlLink, btnDelete] = actionBar.children;
     // hdlLink.addEventListener('drag', stopBubble);
 
     let editing = false;
@@ -293,14 +323,15 @@ function createNodeEl(node) {
         handleLinkAction(node.id, cb);
     });
 
-    el.addEventListener('dragstart', event => {
-        DRAG_STATE.id = node.id;
-        DRAG_STATE.startX = node.x;
-        DRAG_STATE.startY = node.y;
-        DRAG_STATE.satrtMouseX = event.offsetX;
-        DRAG_STATE.startMouseY = event.offsetY;
-        DRAG_STATE.mouseOffsetX = event.offsetX;
-        DRAG_STATE.mouseOffsetY = event.offsetY;
+    dragBar.addEventListener('mousedown', event => {
+        console.log('node', event.clientX, event.clientY, node.x, node.y);
+        MOUSE_STATE.action = 'drag';
+        MOUSE_STATE.id = node.id;
+        MOUSE_STATE.startX = node.x;
+        MOUSE_STATE.startY = node.y;
+        MOUSE_STATE.startMouseX = event.clientX;
+        MOUSE_STATE.startMouseY = event.clientY;
+        NODE_CONTAINER.classList.add('dragging');
     });
 
     node.updateEl = () => {
@@ -315,10 +346,10 @@ function createNodeEl(node) {
  * @param {Number} id 要删除节点的ID 
  */
 function deleteNode(id) {
-    const node = NODES[id];
-    [...node.inLinks].forEach(i => NODES[i].outLinks.delete(id));
-    [...node.outLinks].forEach(i => NODES[i].inLinks.delete(id));
-    delete NODES[id];
+    const node = DATA.nodes[id];
+    [...node.inLinks].forEach(i => DATA.nodes[i].outLinks.delete(id));
+    [...node.outLinks].forEach(i => DATA.nodes[i].inLinks.delete(id));
+    delete DATA.nodes[id];
     node.el.remove();
     redrawLinks();
     if (LINK_STATE.id === id) {
@@ -328,9 +359,9 @@ function deleteNode(id) {
 }
 
 function clearNodes() {
-    Object.values(NODES).forEach(node => {
+    Object.values(DATA.nodes).forEach(node => {
         node.el.remove();
-        delete NODES[node.id];
+        delete DATA.nodes[node.id];
     });
     redrawLinks();
     LINK_STATE.id = null;
@@ -344,7 +375,7 @@ function clearNodes() {
  */
 function createAndAppendNode() {
     const node = createNode();
-    NODES[node.id] = node;
+    DATA.nodes[node.id] = node;
     NODE_CONTAINER.appendChild(node.el);
     node.redrawNode();
 }
@@ -355,10 +386,10 @@ function loadPool(str) {
     if (str) {
         try {
             const pool = JSON.parse(str);
-            Object.assign(PANEL, pool.panel);
+            Object.assign(DATA.panel, pool.panel);
             clearNodes();
             pool.nodes.map(n => createNode(n)).forEach(node => {
-                NODES[node.id] = node;
+                DATA.nodes[node.id] = node;
                 NODE_CONTAINER.appendChild(node.el);
                 node.redrawNode();
                 node.updateEl();
@@ -372,7 +403,7 @@ function loadPool(str) {
 
 function savePool() {
     return JSON.stringify({
-        nodes: Object.values(NODES).map(node => ({
+        nodes: Object.values(DATA.nodes).map(node => ({
             id: node.id,
             x: node.x,
             y: node.y,
@@ -380,7 +411,7 @@ function savePool() {
             inLinks: [...node.inLinks],
             outLinks: [...node.outLinks],
         })),
-        panel: PANEL,
+        panel: DATA.panel,
     });
 }
 

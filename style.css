@@ -156,7 +156,7 @@ button:active {
 .node >  .node-action-bar > .node-handle {
     height: 1em;
     width: 1em;
-    margin: 0 0.2em;
+    margin: 0 1em;
     background-color: #ccc;
     border-radius: .5em;
     transition: border-top-right-radius 500ms, border-bottom-left-radius 500ms, background-color 500ms;
@@ -188,6 +188,11 @@ button:active {
 
 #node-container.moving {
     cursor: move;
+}
+
+#node-container.dragging,
+#node-container.dragging * {
+    cursor: grabbing;
 }
 
 #sl-panel {
